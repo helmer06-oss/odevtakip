@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>tolgaaydos.com – Ödev Takip Sistemi</title>
+  <style>
+    :root{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      --bg:#f1f3f6; --card:#fff; --text:#1f2937; --muted:#6b7280;
+      --line:#e5e7eb; --blue:#0b79f7; --green:#22c55e; --danger:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);}
+    .wrap{max-width:600px;margin:0 auto;padding:22px 14px 34px;}
+    .card{background:var(--card);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:18px;overflow:hidden;}
+    .brandBand{
+      display:flex;align-items:center;justify-content:center;gap:16px;
+      padding:14px;margin:-18px -18px 16px;background:linear-gradient(180deg,#fff,#f7f8fb);
+      border-bottom:1px solid var(--line);
+    }
+    .brandBand img{width:56px;height:56px;object-fit:contain;border-radius:12px;flex:0 0 auto;}
+    .brandText{display:flex;flex-direction:column;line-height:1.1;text-align:left}
+    .brandTop{font-weight:900;font-size:24px;letter-spacing:.4px}
+    .brandBottom{font-weight:800;font-size:20px;letter-spacing:.25px;color:#374151}
+    @media(max-width:420px){.brandBand img{width:48px;height:48px}.brandTop{font-size:21px}.brandBottom{font-size:18px}}
+
+    label{display:block;font-weight:850;color:#374151;margin:14px 0 8px;font-size:16px;}
+    input,select{width:100%;padding:14px;border-radius:12px;border:2px solid var(--line);background:#fff;font-size:16px;outline:none;display:block;}
+    input:focus,select:focus{border-color:#bcd7ff; box-shadow:0 0 0 4px rgba(11,121,247,.10);}
+    .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;}
+    @media(max-width:420px){.row{grid-template-columns:1fr}}
+    .btn{width:100%;padding:14px 16px;border:none;border-radius:12px;font-size:18px;font-weight:900;color:#fff;cursor:pointer;}
+    .btn.blue{background:var(--blue);margin-top:16px;}
+    .btn.green{background:var(--green);display:flex;align-items:center;justify-content:center;gap:10px;}
+    .sep{height:2px;background:var(--line);margin:16px 0;}
+    .tinyRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+    @media(max-width:420px){.tinyRow{grid-template-columns:1fr}}
+    .ghost{background:#eef1f7;color:#111;border:1px solid #d6d8e1;}
+    details{margin-top:14px}
+    summary{cursor:pointer;color:var(--muted);font-weight:850}
+    table{width:100%;border-collapse:collapse;margin-top:10px;}
+    th,td{padding:10px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:14px;vertical-align:top;word-break:break-word;}
+    th{color:var(--muted);font-weight:900;font-size:12px}
+    .tag{display:inline-block;padding:4px 10px;border-radius:999px;background:#eef2ff;color:#1d4ed8;font-weight:900;font-size:12px}
+    .danger{border:none;background:var(--danger);color:#fff;border-radius:10px;padding:8px 10px;font-weight:900;cursor:pointer;white-space:nowrap;}
+    .status{margin-top:10px;font-size:13px;color:var(--muted);text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <div class="brandBand">
+        <img id="brandLogo" src="logo.png" alt="Tolga Aydos Logo">
+        <div class="brandText">
+          <div class="brandTop">tolgaaydos.com</div>
+          <div class="brandBottom">Ödev Takip Sistemi</div>
+        </div>
+      </div>
+
+      <label>Öğrenci Adı Soyadı:</label>
+      <input id="student" list="studentList" placeholder="Örn: Ahmet Yılmaz" autocomplete="off" />
+      <datalist id="studentList"></datalist>
+
+      <label>Tarih:</label>
+      <input id="date" type="date" />
+
+      <label>Kitap Seçimi:</label>
+      <select id="book">
+        <option value="">Kitap Seçiniz...</option>
+        <option>TYT Matematik Soru Bankası</option>
+        <option>AYT Fizik Konu Anlatımı</option>
+        <option>Geometri Yaprak Test</option>
+        <option>Paragraf Soru Bankası</option>
+        <option>Kimya Denemeleri</option>
+      </select>
+
+      <div class="row">
+        <div>
+          <label>Başlangıç Sayfası:</label>
+          <input id="pStart" type="number" min="1" placeholder="10" />
+        </div>
+        <div>
+          <label>Bitiş Sayfası:</label>
+          <input id="pEnd" type="number" min="1" placeholder="15" />
+        </div>
+      </div>
+
+      <button class="btn blue" id="addBtn" type="button">Listeye Ekle</button>
+
+      <div class="sep"></div>
+
+      <button class="btn green" id="waBtn" type="button"><span>📲</span> WhatsApp ile Gönder</button>
+
+      <div class="tinyRow">
+        <button class="btn ghost" id="copyBtn" type="button">Metni Kopyala</button>
+        <button class="btn ghost" id="todayBtn" type="button">Bugün</button>
+      </div>
+
+      <div class="status" id="status">Hazır.</div>
+
+      <details>
+        <summary>Kayıtları Göster / Yönet</summary>
+        <table>
+          <thead>
+            <tr>
+              <th>Öğrenci</th><th>Tarih</th><th>Kitap</th><th>Sayfa</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div style="margin-top:12px;">
+          <button class="danger" id="wipeBtn" type="button">Tüm Veriyi Sil</button>
+        </div>
+      </details>
+
+    </div>
+  </div>
+
+<script>
+  const KEY = "odev_panel_students_mobilefix_v1";
+  const $ = (id) => document.getElementById(id);
+
+  function setStatus(msg){ $("status").textContent = msg; }
+
+  // logo fallback
+  (function fixLogo(){
+    const img = $("brandLogo");
+    img.addEventListener("error", () => {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80">
+        <rect width="100%" height="100%" rx="14" fill="#eef2ff"/>
+        <text x="50%" y="54%" text-anchor="middle" font-size="34" font-family="Arial" fill="#1d4ed8" font-weight="700">TA</text>
+      </svg>`;
+      img.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    });
+  })();
+
+  function todayISO(){
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0,10);
+  }
+
+  // ✅ iOS/Preview sorunlarına karşı: localStorage çalışmazsa sessionStorage’a düş
+  function storageOK(){
+    try{
+      localStorage.setItem("__t","1");
+      localStorage.removeItem("__t");
+      return true;
+    }catch{
+      return false;
+    }
+  }
+  const STORE = storageOK() ? localStorage : sessionStorage;
+
+  function load(){
+    try{ return JSON.parse(STORE.getItem(KEY) || '{"students":{}}'); }
+    catch{ return { students:{} }; }
+  }
+  function save(db){ STORE.setItem(KEY, JSON.stringify(db)); }
+
+  function normName(s){ return (s||"").trim().replace(/\s+/g," "); }
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  function ensureStudent(db, studentName){
+    if(!db.students[studentName]){
+      db.students[studentName] = { createdAt: Date.now(), assignments: [] };
+    }
+  }
+
+  function validate(student, date, book, pStart, pEnd){
+    if(!student) return "Öğrenci adı soyadı boş olamaz.";
+    if(!date) return "Tarih seçmelisin.";
+    if(!book) return "Lütfen bir kitap seçiniz.";
+    if(pStart && pEnd && Number(pEnd) < Number(pStart)) return "Bitiş sayfası, başlangıçtan küçük olamaz.";
+    return "";
+  }
+
+  function refreshStudentDatalist(db){
+    const dl = $("studentList");
+    const names = Object.keys(db.students).sort((a,b)=>a.localeCompare(b,"tr"));
+    dl.innerHTML = "";
+    names.forEach(n=>{
+      const o=document.createElement("option");
+      o.value=n;
+      dl.appendChild(o);
+    });
+  }
+
+  function flatRows(db){
+    const rows = [];
+    for(const [student, rec] of Object.entries(db.students)){
+      for(let i=0;i<rec.assignments.length;i++){
+        rows.push({ student, idx:i, ...rec.assignments[i] });
+      }
+    }
+    rows.sort((x,y)=>(y.createdAt||0)-(x.createdAt||0));
+    return rows;
+  }
+
+  function render(){
+    const db = load();
+    refreshStudentDatalist(db);
+
+    const rows = flatRows(db);
+    const tb = $("tbody");
+    tb.innerHTML = "";
+
+    rows.forEach(r=>{
+      const pages = `${r.pStart || ""}${r.pEnd ? "-" + r.pEnd : ""}`.trim() || "-";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${esc(r.student)}</td>
+        <td><span class="tag">${esc(r.date || "-")}</span></td>
+        <td>${esc(r.book)}</td>
+        <td>${esc(pages)}</td>
+        <td><button class="danger" type="button" data-student="${esc(r.student)}" data-idx="${r.idx}">Sil</button></td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    setStatus(`Hazır. Kayıt sayısı: ${rows.length} (${STORE === localStorage ? "kalıcı" : "geçici"})`);
+  }
+
+  function buildWhatsAppMessage(studentName, dateISO){
+    const db = load();
+    const rec = db.students[studentName];
+    if(!rec) return "";
+
+    const list = rec.assignments.filter(a => a.date === dateISO);
+    if(list.length === 0) return "";
+
+    const trDate = dateISO ? dateISO.split("-").reverse().join(".") : dateISO;
+    const pageText = (a) => {
+      const s = `${a.pStart || ""}${a.pEnd ? "-" + a.pEnd : ""}`.trim();
+      return s || "-";
+    };
+
+    const grouped = {};
+    list.forEach(a=>{
+      grouped[a.book] = grouped[a.book] || [];
+      grouped[a.book].push(pageText(a));
+    });
+
+    const lines = [];
+    lines.push("━━━━━━━━━━━━━━━━━━");
+    lines.push("*tolgaaydos.com* | *Ödev Takip Sistemi*");
+    lines.push("━━━━━━━━━━━━━━━━━━");
+    lines.push(`✅ *Öğrenci:* ${studentName}`);
+    lines.push(`✅ *Tarih:* ${trDate}`);
+    lines.push("");
+    lines.push("★ *Ödevler*");
+
+    let i=1;
+    Object.keys(grouped).forEach(book=>{
+      lines.push(`${i}) *${book}*`);
+      lines.push(`   • _Sayfa:_ ${grouped[book].join(", ")}`);
+      i++;
+    });
+
+    lines.push("");
+    lines.push("✅ _İyi çalışmalar!_");
+    lines.push("━━━━━━━━━━━━━━━━━━");
+    return lines.join("\n");
+  }
+
+  async function copyText(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      setStatus("Metin kopyalandı.");
+    }catch{
+      const ta=document.createElement("textarea");
+      ta.value=text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setStatus("Metin kopyalandı.");
+    }
+  }
+
+  // init
+  $("date").value = todayISO();
+  render();
+
+  $("todayBtn").addEventListener("click", () => {
+    $("date").value = todayISO();
+    setStatus("Tarih: Bugün seçildi.");
+  });
+
+  $("addBtn").addEventListener("click", () => {
+    try{
+      const student = normName($("student").value);
+      const date = $("date").value;
+      const book = $("book").value;
+      const pStart = $("pStart").value ? Number($("pStart").value) : "";
+      const pEnd = $("pEnd").value ? Number($("pEnd").value) : "";
+
+      const err = validate(student, date, book, pStart, pEnd);
+      if(err){ alert(err); setStatus(err); return; }
+
+      const db = load();
+      ensureStudent(db, student);
+
+      db.students[student].assignments.push({ date, book, pStart, pEnd, createdAt: Date.now() });
+      save(db);
+
+      $("book").value=""; $("pStart").value=""; $("pEnd").value="";
+      setStatus("Kayıt eklendi.");
+      render();
+    }catch(e){
+      alert("Kayıt sırasında hata oluştu.");
+      setStatus("Hata: " + (e && e.message ? e.message : e));
+    }
+  });
+
+  $("waBtn").addEventListener("click", () => {
+    try{
+      const student = normName($("student").value);
+      const date = $("date").value;
+
+      if(!student){ alert("Öğrenci adını yazmalısın."); setStatus("Öğrenci adı eksik."); return; }
+      if(!date){ alert("Tarih seçmelisin."); setStatus("Tarih eksik."); return; }
+
+      const text = buildWhatsAppMessage(student, date);
+      if(!text){ alert("Bu öğrenci için seçili tarihte ödev yok."); setStatus("Gönderilecek ödev yok."); return; }
+
+      // ✅ iOS’ta en stabil yöntem: yeni pencere değil, aynı sekmede yönlendirme
+      const url = "https://wa.me/?text=" + encodeURIComponent(text);
+      setStatus("WhatsApp açılıyor...");
+      location.href = url;
+    }catch(e){
+      alert("WhatsApp açılırken hata oluştu.");
+      setStatus("Hata: " + (e && e.message ? e.message : e));
+    }
+  });
+
+  $("copyBtn").addEventListener("click", async () => {
+    const student = normName($("student").value);
+    const date = $("date").value;
+    if(!student){ alert("Öğrenci adını yazmalısın."); setStatus("Öğrenci adı eksik."); return; }
+    if(!date){ alert("Tarih seçmelisin."); setStatus("Tarih eksik."); return; }
+    const text = buildWhatsAppMessage(student, date);
+    if(!text){ alert("Bu öğrenci için seçili tarihte ödev yok."); setStatus("Kopyalanacak metin yok."); return; }
+    await copyText(text);
+  });
+
+  $("tbody").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-student]");
+    if(!btn) return;
+
+    const student = btn.getAttribute("data-student");
+    const idx = Number(btn.getAttribute("data-idx"));
+
+    const db = load();
+    const rec = db.students[student];
+    if(!rec) return;
+
+    rec.assignments.splice(idx, 1);
+    if(rec.assignments.length === 0) delete db.students[student];
+
+    save(db);
+    setStatus("Kayıt silindi.");
+    render();
+  });
+
+  $("wipeBtn").addEventListener("click", () => {
+    if(!confirm("Tüm kayıtlar silinsin mi?")) return;
+    STORE.removeItem(KEY);
+    setStatus("Tüm veriler silindi.");
+    render();
+  });
+</script>
+</body>
+</html>
