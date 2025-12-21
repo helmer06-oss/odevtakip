@@ -228,46 +228,61 @@
   }
 
   function buildWhatsAppMessage(studentName, dateISO){
-    const db = load();
-    const rec = db.students[studentName];
-    if(!rec) return "";
+  const db = load();
+  const rec = db.students[studentName];
+  if(!rec) return "";
 
-    const list = rec.assignments.filter(a => a.date === dateISO);
-    if(list.length === 0) return "";
+  const list = rec.assignments.filter(a => a.date === dateISO);
+  if(list.length === 0) return "";
 
-    const trDate = dateISO ? dateISO.split("-").reverse().join(".") : dateISO;
-    const pageText = (a) => {
-      const s = `${a.pStart || ""}${a.pEnd ? "-" + a.pEnd : ""}`.trim();
-      return s || "-";
-    };
+  const trDate = dateISO.split("-").reverse().join(".");
 
-    const grouped = {};
-    list.forEach(a=>{
-      grouped[a.book] = grouped[a.book] || [];
-      grouped[a.book].push(pageText(a));
-    });
+  const pageText = (a) => {
+    const s = `${a.pStart || ""}${a.pEnd ? "-" + a.pEnd : ""}`.trim();
+    return s || "-";
+  };
 
-    const lines = [];
-    lines.push("━━━━━━━━━━━━━━━━━━");
-    lines.push("*tolgaaydos.com* | *Ödev Takip Sistemi*");
-    lines.push("━━━━━━━━━━━━━━━━━━");
-    lines.push(`✅ *Öğrenci:* ${studentName}`);
-    lines.push(`✅ *Tarih:* ${trDate}`);
-    lines.push("");
-    lines.push("★ *Ödevler*");
+  // Aynı kitaptan birden fazla varsa birleştir
+  const grouped = {};
+  list.forEach(a => {
+    grouped[a.book] = grouped[a.book] || [];
+    grouped[a.book].push(pageText(a));
+  });
 
-    let i=1;
-    Object.keys(grouped).forEach(book=>{
-      lines.push(`${i}) *${book}*`);
-      lines.push(`   • _Sayfa:_ ${grouped[book].join(", ")}`);
-      i++;
-    });
+  const lines = [];
 
-    lines.push("");
-    lines.push("✅ _İyi çalışmalar!_");
-    lines.push("━━━━━━━━━━━━━━━━━━");
-    return lines.join("\n");
-  }
+  // Başlık
+  lines.push("────────────────────");
+  lines.push("*tolgaaydos.com*  |  *Ödev Takip Sistemi*");
+  lines.push("────────────────────");
+  lines.push("");
+
+  // ✅ 1) Tarih en üste
+  lines.push(`📅 *Tarih:* ${trDate}`);
+  lines.push(`🎓 *Öğrenci:* ${studentName}`);
+  lines.push("");
+
+  // ✅ 2) Ödevler başlığı daha güçlü
+  lines.push("══════════  📚 *ÖDEVLER*  ══════════");
+
+  let i = 1;
+  Object.keys(grouped).forEach(book => {
+    const pages = grouped[book].join(", ");
+    lines.push(`${i}) *${book}*`);
+    lines.push(`   ▸ Sayfa: ${pages}`);
+    i++;
+  });
+
+  lines.push("");
+  lines.push("_İyi çalışmalar._");
+
+  // ✅ 3) Otomatik imza
+  lines.push("*Tolga Hoca*");
+  lines.push("────────────────────");
+
+  return lines.join("\n");
+}
+
 
   async function copyText(text){
     try{
