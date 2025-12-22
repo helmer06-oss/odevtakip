@@ -111,6 +111,11 @@
 
       <button class="btn green" id="waBtn" type="button"><span>📲</span> WhatsApp ile Gönder</button>
       
+      <button class="btn ghost" id="weeklyBtn" type="button">
+  📅 Haftalık Ödev Özeti (WhatsApp)
+</button>
+
+      
       <button id="weeklyBtn" class="btn secondary">
   📅 Haftalık Ödev Özeti (WhatsApp)
 </button>
@@ -466,9 +471,103 @@ function sendWeeklySummary(){
   const msg = encodeURIComponent(lines.join("\n"));
   window.open(`https://wa.me/?text=${msg}`, "_blank");
 }
+  // Haftalık özet (son 7 gün) - iOS uyumlu
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("weeklyBtn");
+  if (btn) btn.addEventListener("click", sendWeeklySummary);
+});
+
+function sendWeeklySummary(){
+  const studentEl = document.getElementById("student"); // ✅ senin input id’n bu
+  const dateEl = document.getElementById("date");       // ✅ tarih inputu
+
+  const studentName = (studentEl?.value || "").trim();
+  if(!studentName){
+    alert("Öğrenci adını yazmalısın.");
+    return;
+  }
+
+  const db = load();
+  const rec = db.students?.[studentName];
+  if(!rec || !Array.isArray(rec.assignments) || rec.assignments.length === 0){
+    alert("Bu öğrenci için kayıt bulunamadı.");
+    return;
+  }
+
+  // Bugünden geriye 7 gün (bugün dahil)
+  const end = new Date();
+  end.setHours(23,59,59,999);
+  const start = new Date();
+  start.setDate(start.getDate() - 6);
+  start.setHours(0,0,0,0);
+
+  // Son 7 günün ödevleri
+  const list = rec.assignments.filter(a => {
+    if(!a.date) return false;
+    const d = new Date(a.date);
+    return d >= start && d <= end;
+  });
+
+  if(list.length === 0){
+    alert("Son 7 gün içinde ödev yok.");
+    return;
+  }
+
+  // Tarihe göre grupla, sonra kitaplara göre grupla
+  const byDate = {};
+  list.forEach(a => {
+    byDate[a.date] = byDate[a.date] || [];
+    byDate[a.date].push(a);
+  });
+
+  const fmtTR = (iso) => iso.split("-").reverse().join(".");
+
+  const pageText = (a) => {
+    const s = `${a.pStart || ""}${a.pEnd ? "-" + a.pEnd : ""}`.trim();
+    return s || "-";
+  };
+
+  const dates = Object.keys(byDate).sort(); // eski -> yeni
+
+  const lines = [];
+  lines.push("*tolgaaydos.com* | *Haftalık Ödev Özeti*");
+  lines.push(`🎓 *Öğrenci:* ${studentName}`);
+  lines.push(`📅 *Aralık:* ${fmtTR(dates[0])} - ${fmtTR(dates[dates.length-1])}`);
+  lines.push("");
+  lines.push("📚 *ÖDEVLER*");
+
+  dates.forEach(dISO => {
+    lines.push("");
+    lines.push(`🗓️ *${fmtTR(dISO)}*`);
+
+    const grouped = {};
+    byDate[dISO].forEach(a => {
+      grouped[a.book] = grouped[a.book] || [];
+      grouped[a.book].push(pageText(a));
+    });
+
+    let i = 1;
+    Object.keys(grouped).forEach(book => {
+      lines.push(`${i}) *${book}*`);
+      lines.push(`   ▸ Sayfa: ${grouped[book].join(", ")}`);
+      i++;
+    });
+  });
+
+  lines.push("");
+  lines.push("_İyi çalışmalar._");
+  lines.push("*Tolga Hoca*");
+
+  const url = "https://wa.me/?text=" + encodeURIComponent(lines.join("\n"));
+
+  // ✅ iPhone’da en stabil: aynı sekmede yönlendir
+  location.href = url;
+}
+
 </script>
 </body>
 </html>
+
 
 
 
