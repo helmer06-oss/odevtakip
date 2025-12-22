@@ -76,7 +76,18 @@
           <div class="brandBottom">Ödev Takip Sistemi</div>
         </div>
       </div>
+<label>Öğrenci Listesi:</label>
+<div class="row">
+  <select id="studentSelect">
+    <option value="">Öğrenci seçiniz...</option>
+  </select>
+  <button class="btn ghost" id="addStudentBtn" type="button">➕ Listeye Ekle</button>
+</div>
 
+<div class="row" style="margin-top:10px;">
+  <button class="btn ghost" id="renameStudentBtn" type="button">✏️ Adı Düzenle</button>
+  <button class="btn ghost" id="deleteStudentBtn" type="button">🗑️ Listeden Sil</button>
+</div>
       <label>Öğrenci Adı Soyadı:</label>
       <input id="student" list="studentList" placeholder="Örn: Ahmet Yılmaz" autocomplete="off" />
       <datalist id="studentList"></datalist>
@@ -558,10 +569,134 @@ function sendWeeklySummary(){
   // ✅ iPhone’da en stabil: aynı sekmede yönlendir
   location.href = url;
 }
+// === Öğrenci listesi (kalıcı) ===
+document.addEventListener("DOMContentLoaded", () => {
+  refreshStudentSelect();
+
+  const sel = document.getElementById("studentSelect");
+  const studentEl = document.getElementById("student");
+
+  if (sel && studentEl) {
+    sel.addEventListener("change", () => {
+      studentEl.value = sel.value || "";
+      // buton akıllandırma vb. varsa tetikleyelim
+      if (typeof updateWeeklyBtnState === "function") updateWeeklyBtnState();
+    });
+  }
+
+  const addBtn = document.getElementById("addStudentBtn");
+  if (addBtn) addBtn.addEventListener("click", addStudentToList);
+
+  const delBtn = document.getElementById("deleteStudentBtn");
+  if (delBtn) delBtn.addEventListener("click", deleteStudentFromList);
+
+  const renBtn = document.getElementById("renameStudentBtn");
+  if (renBtn) renBtn.addEventListener("click", renameStudentInList);
+});
+
+function refreshStudentSelect() {
+  const sel = document.getElementById("studentSelect");
+  if (!sel) return;
+
+  const db = load();
+  const names = Object.keys(db.students || {}).sort((a,b)=>a.localeCompare(b, "tr"));
+
+  const current = sel.value;
+  sel.innerHTML = `<option value="">Öğrenci seçiniz...</option>` +
+    names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
+
+  // seçimi koru
+  if (names.includes(current)) sel.value = current;
+}
+
+function addStudentToList() {
+  const studentEl = document.getElementById("student");
+  const name = (studentEl?.value || "").trim();
+  if (!name) return alert("Öğrenci adı soyadı yazınız.");
+
+  const db = load();
+  db.students = db.students || {};
+
+  if (!db.students[name]) {
+    db.students[name] = { assignments: [] };
+    save(db);
+  }
+
+  refreshStudentSelect();
+  const sel = document.getElementById("studentSelect");
+  if (sel) sel.value = name;
+
+  alert("Öğrenci listeye eklendi.");
+}
+
+function deleteStudentFromList() {
+  const sel = document.getElementById("studentSelect");
+  const name = (sel?.value || "").trim();
+  if (!name) return alert("Önce listeden bir öğrenci seçiniz.");
+
+  if (!confirm(`"${name}" öğrencisini listeden silmek istiyor musunuz?\n(Ödev kayıtları da silinir)`)) return;
+
+  const db = load();
+  if (db.students && db.students[name]) {
+    delete db.students[name];
+    save(db);
+  }
+
+  refreshStudentSelect();
+  const studentEl = document.getElementById("student");
+  if (studentEl) studentEl.value = "";
+  alert("Öğrenci silindi.");
+}
+
+function renameStudentInList() {
+  const sel = document.getElementById("studentSelect");
+  const oldName = (sel?.value || "").trim();
+  if (!oldName) return alert("Önce listeden bir öğrenci seçiniz.");
+
+  const newName = prompt("Yeni öğrenci adını giriniz:", oldName);
+  if (!newName) return;
+  const nn = newName.trim();
+  if (!nn) return;
+
+  const db = load();
+  db.students = db.students || {};
+
+  if (!db.students[oldName]) return alert("Kayıt bulunamadı.");
+
+  if (oldName === nn) return;
+
+  if (db.students[nn]) {
+    return alert("Bu isim zaten var. Lütfen farklı bir isim giriniz.");
+  }
+
+  // kayıtları taşı
+  db.students[nn] = db.students[oldName];
+  delete db.students[oldName];
+  save(db);
+
+  refreshStudentSelect();
+  sel.value = nn;
+
+  const studentEl = document.getElementById("student");
+  if (studentEl) studentEl.value = nn;
+
+  alert("Öğrenci adı güncellendi.");
+}
+
+// Basit HTML escape (select içine güvenli yazmak için)
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
 
 </script>
 </body>
 </html>
+
 
 
 
