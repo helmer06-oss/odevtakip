@@ -84,6 +84,14 @@
       <datalist id="studentList"></datalist>
 
       <label>Tarih:</label>
+      <label>Tarih Aralığı:</label>
+<div class="row">
+  <input type="date" id="startDate">
+  <input type="date" id="endDate">
+</div>
+<div class="muted small" style="margin-top:6px;">
+  İpucu: Tek gün istiyorsan başlangıç ve bitişi aynı seç.
+</div>
       <input id="date" type="date" />
 
       <label>Kitap Seçimi:</label>
@@ -822,10 +830,46 @@ function renameBook(){
 
   alert("Kitap adı güncellendi.");
 }
+document.addEventListener("DOMContentLoaded", () => {
+  const today = new Date().toISOString().slice(0,10);
+  const s = document.getElementById("startDate");
+  const e = document.getElementById("endDate");
+  if(s && !s.value) s.value = today;
+  if(e && !e.value) e.value = today;
+});
+function getDateRange(){
+  const s = document.getElementById("startDate")?.value;
+  const e = document.getElementById("endDate")?.value;
+
+  // aralık yoksa eski tek tarih alanına düş
+  if(!s || !e) {
+    const single = document.getElementById("date")?.value;
+    return single ? [single] : [];
+  }
+
+  if(s > e){
+    alert("Başlangıç tarihi, bitişten büyük olamaz.");
+    return [];
+  }
+
+  // s..e arası tüm günler
+  const dates = [];
+  let cur = new Date(s);
+  const end = new Date(e);
+  cur.setHours(12,0,0,0);
+  end.setHours(12,0,0,0);
+
+  while(cur <= end){
+    dates.push(cur.toISOString().slice(0,10));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+}
 
 </script>
 </body>
 </html>
+
 
 
 
